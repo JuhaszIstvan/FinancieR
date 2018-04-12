@@ -1,0 +1,114 @@
+---
+title: "QuantMod"
+author: "Juhász_István"
+date: "July 17, 2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+This project is a learning exercise following the guide found at https://www.quantinsti.com/blog/a-guide-on-r-quantmod-package-how-to-get-started/ 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require("quantmod")
+```
+
+```{r packages}
+
+```
+
+
+```{r Start}
+options("getSymbols.warning4.0"=FALSE)
+options("getSymbols.yahoo.warning"=FALSE)
+getSymbols(Symbols = "AAPL", 
+           env = environment(),
+           reload.Symbols = FALSE,
+           verbose = FALSE,
+           warnings = TRUE,
+           src = "yahoo",
+           symbol.lookup = TRUE,
+           auto.assign = getOption('getSymbols.auto.assign',TRUE))
+#chartSeries(AAPL)
+#plot(AAPL)
+
+```
+
+
+#VAR CVAR
+```{r VAR}
+maxDate<-"2000-01-01"
+library(PerformanceAnalytics)
+MSFT.prices<-Ad(getSymbols("MSFT",auto.assign=F,from=maxDate))
+MSFT.rets<-dailyReturn(MSFT.prices)
+VaR(MSFT.rets,p=0.95, method="historical")
+#note how CVar (=expected shortfall)is higher than Var.
+#xheck the other types of calculations
+CVaR(MSFT.rets,p=0.99,method="historical")
+
+tickers<-c("MSFT","AAPL","AMZN")
+weights<-c(0.5,0.1,0.4)
+getSymbols(tickers,from=maxDate)
+#what is adjusted close?
+Port.prices<-na.omit(merge(Ad(MSFT),Ad(AAPL),Ad(AMZN)))
+head(Port.prices)
+#what is rate of change
+Port.return<-ROC(Port.prices,type="discrete")[-1,]
+colnames(Port.return)<-tickers
+#what is odified, gaussian method?
+#porfolio_method sows the contributions
+#modified is used when the returns are skewed.(corner fisher var)
+head(Port.return)
+VaR(Port.return,p=0.99,weights=weights,portfolio_method="component",method="historical")
+#head(Port.return)
+```
+
+
+```{r quantmod_pulling_in_the_data}
+
+#Indices
+Indices<-c("^GSPC","^DJI") #Standard and Poor's, Dow Jones Industrial Average
+
+#Internet companies 
+getSymbols("AAPL",src="yahoo") 
+getSymbols("FB",src="yahoo") #Yahoo stock wasn't found, using Facebook instead. 
+getSymbols("MSFT",src="yahoo")
+getSymbols("AMZN",src="yahoo") #Mr Bezos 
+getSymbols("RHT", src="yahoo") #Redhat because open sauce is love, open sauce is life
+
+#Investment banks
+InvestmentBanks<-c("GS","C","MS")
+
+
+getSymbols(c(InvestmentBanks,Indices) )
+
+#verifying the data is valid
+if(is.OHLC(AAPL)){
+  cat("The data format is valid")
+}
+
+
+
+```
+
+```{R Technical_and_Charting}
+
+head(AAPL) # You should see the following result.
+chartSeries(AAPL, TA=NULL) # this should produce the following chart.
+barChart(AAPL)
+
+hist(AAPL[,4]) #This command plots the histogram of closing price of apple stock.
+
+hist(AAPL[,4], main = "Apple Close") #The histogram of closing price of apple stock with the heading “Apple Close”
+
+#Technical indicators
+
+chartSeries(AAPL)
+addMACD() # adds moving average convergence divergence signals to the apple stock price
+addBBands() # Adds Bollinger bands to the apple stock price.
+addCCI() # Add Commodity channel index.
+addADX() #Add Directional Movement Indicator
+
+addCMF() #Add Chaiken Money Flow
+```
